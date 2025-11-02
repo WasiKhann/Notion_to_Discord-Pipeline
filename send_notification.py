@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 RECENCY_DAYS = 7
 HISTORY_FILE = "sent_snippets.json"
 NUM_SNIPPETS = 5
+DISCORD_CHAR_LIMIT = 1900  # Safe buffer below Discord's 2000 char limit
+SNIPPET_SEPARATOR = "\n\n---\nIn other news...\n\n"  # Used between snippets
 
 # --- Load Credentials ---
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
@@ -106,16 +108,49 @@ if len(selection_pool) < NUM_SNIPPETS:
 if not selection_pool:
     raise Exception("❌ No snippets available for selection!")
 
-selected_snippets = random.sample(selection_pool, min(NUM_SNIPPETS, len(selection_pool)))
+# Shuffle the selection pool for randomization
+random.shuffle(selection_pool)
 
-display_snippets = []
-for s in selected_snippets:
-    if s in recent_snippets:
-        display_snippets.append("Repeated this week: " + s)
+# Initialize variables for iterative message building
+final_snippets_to_send = []
+current_length = 0
+
+# Process each snippet, respecting character limits
+for snippet in selection_pool:
+    # Prepare the snippet (mark if repeated)
+    display_snippet = "Repeated this week: " + snippet if snippet in recent_snippets else snippet
+    
+    # Calculate new length including separator if not the first snippet
+    new_content_length = (
+        current_length + 
+        len(display_snippet) + 
+        (len(SNIPPET_SEPARATOR) if final_snippets_to_send else 0)
+    )
+    
+    # Check if adding this snippet would exceed the limit
+    if new_content_length <= DISCORD_CHAR_LIMIT:
+        final_snippets_to_send.append(display_snippet)
+        current_length = new_content_length
+        
+        # Stop if we've reached the desired number of snippets
+        if len(final_snippets_to_send) >= NUM_SNIPPETS:
+            break
     else:
-        display_snippets.append(s)
+        # Stop if adding this snippet would exceed the limit
+        break
 
-full_message_content = "\n\n---\nIn other news...\n\n".join(display_snippets)
+# Handle edge case where no snippets could fit
+if not final_snippets_to_send:
+    raise Exception("❌ Critical: All available snippets exceed Discord's character limit!")
+
+# Join selected snippets with separator
+full_message_content = SNIPPET_SEPARATOR.join(final_snippets_to_send)
+
+# Get the original snippets without the "Repeated this week: " prefix for history
+selected_snippets = [
+    s[len("Repeated this week: "):] if s.startswith("Repeated this week: ") else s
+    for s in final_snippets_to_send
+]
 
 # --- Update history: record selected snippets and last_sent_type
 current_time = datetime.now().isoformat()
@@ -123,6 +158,10 @@ new_history = dict(recent_history)
 for snippet in selected_snippets:
     new_history[snippet] = current_time
 new_history["last_sent_type"] = target_category
+
+# Add debug info about message size
+print(f"\n📏 Message length: {len(full_message_content)}/{DISCORD_CHAR_LIMIT} characters")
+print(f"📦 Sending {len(final_snippets_to_send)}/{NUM_SNIPPETS} snippets")
 
 with open(HISTORY_FILE, "w", encoding="utf-8") as f:
     json.dump(new_history, f, indent=2)
