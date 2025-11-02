@@ -84,7 +84,7 @@ if current:
         snippets.append(snippet)
 
 # --- Filter out permanently excluded snippets
-snippets = [s for s in snippets if "Add new point" not in s]
+snippets = [s for s in snippets if "Add new pt" not in s]
 
 if not snippets:
     raise Exception("❌ No snippets found. Check that notion.txt contains separator lines with '..'.")
