@@ -1,0 +1,18 @@
+# Generated data files
+notion_*.txt
+sent_snippets_*.json
+
+# Node.js
+node_modules/
+package.json
+package-lock.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
