@@ -51,7 +51,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add "sent_snippets_DEEN.json"
+          git add --force "sent_snippets_DEEN.json"
           # Only commit and push if there are actual changes
           if ! git diff --staged --quiet; then
             git commit -m "Update Deen stream history"
@@ -87,6 +87,14 @@ jobs:
           NOTION_PAGE_URL: ${{ secrets.NOTION_PAGE_URL_DUNYA }}
         run: node scrape_notion.js
 
+      - name: 'DUNYA DEBUG: Verify Scraped Content'
+        run: |
+          echo "--- Listing files in directory ---"
+          ls -l
+          echo "--- Content of notion_DUNYA.txt ---"
+          cat notion_DUNYA.txt || echo "notion_DUNYA.txt not found"
+          echo "--- End of notion_DUNYA.txt ---"
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -105,7 +113,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add "sent_snippets_DUNYA.json"
+          git add --force "sent_snippets_DUNYA.json"
           # Only commit and push if there are actual changes
           if ! git diff --staged --quiet; then
             git commit -m "Update Dunya stream history"
