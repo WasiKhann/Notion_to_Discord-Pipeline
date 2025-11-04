@@ -1,14 +1,15 @@
 # Notion-to-Discord Pipeline
 
 <p align="center">
-  <img src="./assets/icon.png" alt="Project Icon" width="150">
+  <img src="./assets/icon.png" alt="Project Icon" width="300">
 </p>
 
 <p align="center">
   <strong>An automated, dual-stream content pipeline that scrapes curated snippets from Notion and delivers them to designated Discord channels.</strong>
   <br>
-  <a href="https://github.com/WasiKhann/Notion-to-Discord Pipeline/actions">
-    <img src="https://github.com/WasiKhann/Notion-to-Discord Pipeline/actions/workflows/scrape.yml/badge.svg" alt="Build Status">
+  <!-- Corrected URLs with hyphens instead of spaces -->
+  <a href="https://github.com/WasiKhann/Notion_to_Discord-Pipeline/actions/workflows/scrape.yml">
+    <img src="https://github.com/WasiKhann/Notion_to_Discord-Pipeline/actions/workflows/scrape.yml/badge.svg" alt="Build Status">
   </a>
 </p>
 
@@ -47,7 +48,7 @@ You can easily fork this repository and set up your own automated Notion-to-Disc
 ### Prerequisites
 
 - A GitHub account
-- One or two Notion pages (publicly shared to the web)
+- One or two Notion pages (publicly shared to the web - not indexed for search engine adds "privacy")
 - One or two Discord channels with webhook URLs
 
 ### Setup Guide
