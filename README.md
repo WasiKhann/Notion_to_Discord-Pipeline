@@ -1,169 +1,91 @@
- # 🌙 Private Motion Pipeline
+# Notion-to-Discord Pipeline
 
-A dual-stream automation system that scrapes content from two different Notion pages (Deen and Dunya) and delivers curated snippets to separate Discord channels.
+<p align="center">
+  <img src="./assets/icon.png" alt="Project Icon" width="150">
+</p>
 
-## 🔄 Workflow Overview
+<p align="center">
+  <strong>An automated, dual-stream content pipeline that scrapes curated snippets from Notion and delivers them to designated Discord channels.</strong>
+  <br>
+  <a href="https://github.com/WasiKhann/Notion-to-Discord Pipeline/actions">
+    <img src="https://github.com/WasiKhann/Notion-to-Discord Pipeline/actions/workflows/scrape.yml/badge.svg" alt="Build Status">
+  </a>
+</p>
 
-The pipeline processes two independent streams:
-1. **Deen Stream**: Religious/spiritual content
-2. **Dunya Stream**: Worldly/general content
+---
 
-Each stream:
-- Scrapes a dedicated Notion page
-- Processes and filters the content
-- Sends curated snippets to a specific Discord channel
-- Maintains its own history to avoid recent repeats
+## 🌟 Project Overview
 
-## 🛠️ Technical Components
+**Notion-to-Discord Pipeline** is a robust automation system designed to bridge the gap between your personal knowledge base in Notion and your community on Discord. It runs a daily GitHub Actions workflow that processes two independent content streams ("Deen" for spiritual content and "Dunya" for general content), ensuring that fresh, curated insights are delivered automatically without manual intervention.
 
-### 1. Content Scraping (`scrape_notion.js`)
-- Uses Playwright for headless browser automation
-- Handles stream-specific Notion page URLs
-- Cleans and formats content into `notion_[STREAM].txt` files
-- Validates required environment variables
+This project demonstrates a full CI/CD pipeline, from headless browser scraping and data processing to state management and secure credential handling.
 
-### 2. Snippet Processing (`send_notification.py`)
-- Processes stream-specific content files
-- Implements smart snippet selection:
-  - Categories: "Allah says" and "Knowing Allah" snippets
-  - Maintains selection history
-  - Avoids recent repeats (7-day window)
-  - Alternates between categories
-- Handles message chunking for Discord's character limits
-- Tracks sent snippets in `sent_snippets_[STREAM].json`
+## ✨ Key Features
 
-### 3. Workflow Automation (`scrape.yml`)
-- Runs daily via GitHub Actions
-- Sequential stream processing (Deen → Dunya)
-- Stream-specific environment variables and secrets
-- Automated history file management
+- **Dual-Stream Processing**: Runs two independent jobs sequentially (`Deen` → `Dunya`) to scrape, process, and deliver content from separate Notion pages to separate Discord channels.
+- **Smart Snippet Selection**:
+    - **Guaranteed Count**: Delivers exactly 10 snippets per day, per stream.
+    - **Intelligent Deduplication**: Avoids sending variations of the same core message by grouping snippets that start with the same line.
+    - **Content-Aware Alternation**: Alternates between predefined content categories to ensure variety.
+    - **7-Day Memory**: Tracks sent snippets in a JSON history file to prevent repeats within a week.
+- **Robust Message Handling**: Automatically splits content into multiple messages to respect Discord's 2000-character limit, ensuring all 10 snippets are delivered.
+- **Fully Automated**: Uses a `cron`-scheduled GitHub Actions workflow for a "set it and forget it" daily execution.
+- **Secure Configuration**: Manages all sensitive URLs and tokens using encrypted GitHub Secrets.
 
-## 🔧 Configuration
+## 🛠️ Tech Stack
 
-### Required Secrets
-- `NOTION_PAGE_URL_DEEN`: URL for the Deen stream Notion page
-- `NOTION_PAGE_URL_DUNYA`: URL for the Dunya stream Notion page
-- `DISCORD_WEBHOOK_URL_DEEN`: Discord webhook for Deen content
-- `DISCORD_WEBHOOK_URL_DUNYA`: Discord webhook for Dunya content
+- **Automation & CI/CD**: GitHub Actions
+- **Web Scraping**: Node.js with **Playwright** (for robust, headless browser automation)
+- **Data Processing & Logic**: Python
+- **Notifications**: Discord Webhooks
+- **State Management**: Git & JSON
 
-### Key Settings (`send_notification.py`)
-- `RECENCY_DAYS`: Days before snippets can repeat (default: 7)
-- `NUM_SNIPPETS`: Snippets to send per day (default: 10)
-- `DISCORD_CHAR_LIMIT`: Safe character limit for Discord messages
+## 🚀 Getting Started
 
-## 📋 File Structure
-```
-.
-├── .github/workflows/
-│   └── scrape.yml          # GitHub Actions workflow
-├── scrape_notion.js        # Notion content scraper
-├── send_notification.py    # Snippet processor and sender
-├── notion_DEEN.txt        # Scraped Deen content
-├── notion_DUNYA.txt       # Scraped Dunya content
-├── sent_snippets_DEEN.json  # Deen stream history
-└── sent_snippets_DUNYA.json # Dunya stream history
-```
+You can easily fork this repository and set up your own automated Notion-to-Discord pipeline.
 
-## 🚀 Execution Flow
+### Prerequisites
 
-1. **Deen Stream Processing**
-   - Scrapes Deen Notion page → `notion_DEEN.txt`
-   - Processes and sends Deen snippets
-   - Updates `sent_snippets_DEEN.json`
+- A GitHub account
+- One or two Notion pages (publicly shared to the web)
+- One or two Discord channels with webhook URLs
 
-2. **Dunya Stream Processing**
-   - Scrapes Dunya Notion page → `notion_DUNYA.txt`
-   - Processes and sends Dunya snippets
-   - Updates `sent_snippets_DUNYA.json`
+### Setup Guide
 
-## 🔍 Debug Features
-- Content verification steps for Dunya stream
-- Detailed logging throughout the process
-- Force-add flags for history files in git
+1.  **Fork the Repository**:
+    Click the "Fork" button at the top-right of this page to create your own copy.
 
-## 📝 Content Format
-Notion pages should use `..` on a new line to separate distinct snippets:
-```
-         First snippet content here
-Multiple lines are supported
-..
-Second snippet content here
-..
-And so on
-```
+2.  **Prepare Your Notion Content**:
+    On your Notion page(s), separate individual snippets by placing `..` on a new line.
 
-## 🤝 Contributing
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+    ```
+    This is the first snippet.
+    It can have multiple lines.
+    ..
+    This is the second snippet.
+    ```
 
-## 📄 License
-MIT License - See LICENSE file for details
+3.  **Create Discord Webhooks**:
+    In your Discord channel settings, go to `Integrations` > `Webhooks` > `New Webhook`, and copy the Webhook URL.
 
-        ### Step 1: Create Your GitHub Repository and Add Files
+4.  **Configure GitHub Secrets**:
+    In your forked repository, go to `Settings` > `Secrets and variables` > `Actions` and add the following four secrets:
 
-        1.  Create a new GitHub repository (or fork this one).
-        2.  Add the three core files to your repository in their respective paths:
-            * `.github/workflows/scrape.yml`
-            * `scrape_notion.js`
-            * `send_notification.py`
+    - `NOTION_PAGE_URL_DEEN`: URL for your first Notion page.
+    - `DISCORD_WEBHOOK_URL_DEEN`: Discord webhook for your first channel.
+    - `NOTION_PAGE_URL_DUNYA`: URL for your second Notion page.
+    - `DISCORD_WEBHOOK_URL_DUNYA`: Discord webhook for your second channel.
 
-        ### Step 2: Add Repository Secrets
+    *Note: If you only want one stream, you can use the same URLs for both `_DEEN` and `_DUNYA` secrets.*
 
-        In your GitHub repository, go to **Settings** > **Secrets and variables** > **Actions**. Click **"New repository secret"** and add the following secrets, using the exact names as shown:
+5.  **Activate the Workflow**:
+    Go to the **Actions** tab of your repository. If prompted, enable workflows. The `Daily Notion Reminder` workflow is now ready. It will run automatically every day at midnight UTC, or you can trigger it manually by clicking "Run workflow".
 
-        * `NOTION_PAGE_URL` (This is the URL of your Notion page)
-        * `DISCORD_WEBHOOK_URL`
+## 📫 Contact
 
-        ### Step 3: Update Project Files
+Wasi Khan
 
-        Navigate to each file in your repository and update its content as described below.
+- **GitHub**: [@WasiKhann](https://github.com/WasiKhann)
+- **LinkedIn**: [wasi-khann](https://www.linkedin.com/in/wasi-khann/)
 
-        1.  **`.github/workflows/scrape.yml`:**
-            * Ensure the `cron` schedule is set to your desired time (currently `0 6 * * *` for 6:00 AM UTC daily).
-            * Verify that `NOTION_PAGE_URL` is passed as an environment variable to the `Scrape Notion page` step.
-            * Confirm the `DISCORD_WEBHOOK_URL` secret is passed to the `Send notification` step.
-            * See the latest version of this file in your repository: [`./.github/workflows/scrape.yml`](./.github/workflows/scrape.yml)
-
-        2.  **`scrape_notion.js`:**
-            * Modify the `url` constant to read from the environment variable `NOTION_URL` (this variable is set in `.github/workflows/scrape.yml`).
-            * Adjust the `filter` logic if your Notion page title or "Get Notion free" text varies from the defaults.
-            * See the latest version of this file in your repository: [`./scrape_notion.js`](./scrape_notion.js)
-
-        3.  **`send_notification.py`:**
-            * Verify `NUM_SNIPPETS` is set to your desired number of snippets to include in the notification.
-            * See the latest version of this file in your repository: [`./send_notification.py`](./send_notification.py)
-
-        ### Step 4: Run and Verify
-
-        * Commit all your changes to your GitHub repository.
-        * Go to the "Actions" tab in your repository.
-        * Select the "Daily Notion Reminder" workflow.
-        * Click "Run workflow" (on the right side) to trigger a manual run and test your setup immediately.
-        * Check your Discord channel for the reminders. Review the workflow logs for any errors.
-
-        ---
-
-        ## Contributing (Optional)
-
-        If you'd like to improve this project:
-
-        1.  Fork the repository.
-        2.  Create your feature branch (`git checkout -b feature/AmazingFeature`).
-        3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`).
-        4.  Push to the branch (`git push origin feature/AmazingFeature`).
-        5.  Open a Pull Request.
-
-        ## License
-
-        Distributed under the MIT License. See `LICENSE` for more information. (You might want to create a `LICENSE` file in your repo).
-
-        ## Contact
-
-        Wasi Khan - [LinkedIn](https://www.linkedin.com/in/wasi-khann/) - wasitahirkhan@gmail.com
-
-        Project Link: [Daily Islamic Reminder Automation](https://github.com/WasiKhann/Daily-Islamic-Reminder-Automation)
-
-        ````
+---
