@@ -9,11 +9,23 @@ from itertools import groupby
 
 # --- Settings ---
 RECENCY_DAYS = 7
-HISTORY_FILE = "sent_snippets.json"
 NUM_SNIPPETS = 10  # Required number of snippets per day
 DISCORD_CHAR_LIMIT = 1900  # Safe buffer below Discord's 2000 char limit
 SNIPPET_SEPARATOR = "\n---\n"  # Clean separator between snippets
 MESSAGE_DELAY = 1  # Seconds to wait between sending multiple messages
+
+# --- Stream Configuration ---
+STREAM_PREFIX = os.getenv("STREAM_PREFIX")
+if not STREAM_PREFIX:
+    raise Exception("❌ ERROR: STREAM_PREFIX environment variable is not set! Must be 'DEEN' or 'DUNYA'")
+
+# Dynamic file paths based on stream
+NOTION_FILE = f"notion_{STREAM_PREFIX}.txt"
+HISTORY_FILE = f"sent_snippets_{STREAM_PREFIX}.json"
+
+print(f"\n🌊 Processing {STREAM_PREFIX} stream")
+print(f"  - Reading from: {NOTION_FILE}")
+print(f"  - History file: {HISTORY_FILE}")
 
 # --- Helper Functions ---
 def get_first_line(snippet: str) -> str:
@@ -59,9 +71,15 @@ def chunk_messages(snippets: List[str], char_limit: int) -> List[str]:
 
 # --- Load Credentials ---
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
+if not DISCORD_WEBHOOK_URL:
+    raise Exception(f"❌ ERROR: DISCORD_WEBHOOK_URL environment variable is not set for {STREAM_PREFIX} stream!")
 
 # --- Snippet Parsing ---
-with open("notion.txt", "r", encoding="utf-8") as f:
+try:
+    with open(NOTION_FILE, "r", encoding="utf-8") as f:
+        content = f.read()
+except FileNotFoundError:
+    raise Exception(f"❌ ERROR: Could not find {NOTION_FILE}. Make sure the scraping step completed successfully.")
     content = f.read()
 
 content = content.replace("\r\n", "\n").replace("\r", "\n")

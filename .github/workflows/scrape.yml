@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  run:
+  deen:
+    name: Process Deen Stream
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -26,9 +27,10 @@ jobs:
           npm install playwright
           npx playwright install
 
-      - name: Scrape Notion page
+      - name: Scrape Notion page (Deen)
         env:
-          NOTION_PAGE_URL: ${{ secrets.NOTION_PAGE_URL }}
+          STREAM_PREFIX: 'DEEN'
+          NOTION_PAGE_URL: ${{ secrets.NOTION_PAGE_URL_DEEN }}
         run: node scrape_notion.js
 
       - name: Set up Python
@@ -39,19 +41,85 @@ jobs:
       - name: Install Python dependencies
         run: python -m pip install requests
 
-      - name: Send notification
+      - name: Send notification (Deen)
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          STREAM_PREFIX: 'DEEN'
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL_DEEN }}
         run: python send_notification.py
 
-      - name: Commit and push history file
+      - name: Commit and push history file (Deen)
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add sent_snippets.json
+          git add --force "sent_snippets_DEEN.json"
           # Only commit and push if there are actual changes
           if ! git diff --staged --quiet; then
-            git commit -m "Update sent snippets history"
+            git commit -m "Update Deen stream history"
+            git push
+          else
+            echo "No changes to commit."
+          fi
+
+  dunya:
+    name: Process Dunya Stream
+    needs: deen
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install playwright
+          npx playwright install
+
+      - name: Scrape Notion page (Dunya)
+        env:
+          STREAM_PREFIX: 'DUNYA'
+          NOTION_PAGE_URL: ${{ secrets.NOTION_PAGE_URL_DUNYA }}
+        run: node scrape_notion.js
+
+      - name: 'DUNYA DEBUG: Verify Scraped Content'
+        run: |
+          echo "--- Listing files in directory ---"
+          ls -l
+          echo "--- Content of notion_DUNYA.txt ---"
+          cat notion_DUNYA.txt || echo "notion_DUNYA.txt not found"
+          echo "--- End of notion_DUNYA.txt ---"
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Python dependencies
+        run: python -m pip install requests
+
+      - name: Send notification (Dunya)
+        env:
+          STREAM_PREFIX: 'DUNYA'
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL_DUNYA }}
+        run: python send_notification.py
+
+      - name: Commit and push history file (Dunya)
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add --force "sent_snippets_DUNYA.json"
+          # Only commit and push if there are actual changes
+          if ! git diff --staged --quiet; then
+            git commit -m "Update Dunya stream history"
             git push
           else
             echo "No changes to commit."

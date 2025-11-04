@@ -5,13 +5,21 @@ const { chromium } = require('playwright');
   const browser = await chromium.launch();
   const page = await browser.newPage();
 
-  // Read the URL from environment variable
-  const url = process.env.NOTION_PAGE_URL; // <--- CHANGE THIS LINE
+  // Read required environment variables
+  const prefix = process.env.STREAM_PREFIX;
+  const url = process.env.NOTION_PAGE_URL;
 
-  if (!url) { // <--- Optional: Add a check to ensure the URL is present
-    console.error("❌ ERROR: NOTION_PAGE_URL environment variable is not set!");
+  // Validate environment variables
+  if (!prefix) {
+    console.error("❌ ERROR: STREAM_PREFIX environment variable is not set! Must be 'DEEN' or 'DUNYA'");
     await browser.close();
-    process.exit(1); // Exit with an error code
+    process.exit(1);
+  }
+
+  if (!url) {
+    console.error(`❌ ERROR: NOTION_PAGE_URL environment variable is not set for stream ${prefix}!`);
+    await browser.close();
+    process.exit(1);
   }
 
   await page.goto(url, { waitUntil: 'domcontentloaded' });
@@ -31,7 +39,8 @@ const { chromium } = require('playwright');
   // Re-inject clean spacing around marker
   const final = cleaned.replace(/\n?\.\.\n?/g, '\n..\n');
 
-  fs.writeFileSync('notion.txt', final);
-  console.log("✅ Notion content scraped and cleaned.");
+  const outputFile = `notion_${prefix}.txt`;
+  fs.writeFileSync(outputFile, final);
+  console.log(`✅ ${prefix} stream: Notion content scraped and cleaned -> ${outputFile}`);
   await browser.close();
 })();
