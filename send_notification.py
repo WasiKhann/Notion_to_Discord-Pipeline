@@ -105,7 +105,7 @@ if current:
 snippets = [s for s in snippets if "Add new pt" not in s]
 
 if not snippets:
-    raise Exception("❌ No snippets found. Check that notion.txt contains separator lines with '..'.")
+    raise Exception("❌ No snippets found. Check that your notion page(s) contains separator lines with '..'.")
 
 print(f"🧪 Found {len(snippets)} valid snippet(s) after filtering unwanted entries.")
 

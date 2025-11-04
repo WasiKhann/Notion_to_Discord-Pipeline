@@ -1,87 +1,106 @@
- # 🌙 Daily Islamic Reminder Automation
+ # 🌙 Private Motion Pipeline
 
-## Project Overview
+A dual-stream automation system that scrapes content from two different Notion pages (Deen and Dunya) and delivers curated snippets to separate Discord channels.
 
-This project automates the process of delivering daily Islamic reminders from a Notion page directly to my email inbox and Telegram chat. Leveraging GitHub Actions for scheduled execution, Node.js with Playwright for web scraping, and Python for data parsing and multi-platform notification delivery, this solution ensures I receive curated spiritual content consistently.
+## 🔄 Workflow Overview
 
-This project demonstrates practical skills in:
-* **Web Scraping:** Using Playwright to extract dynamic content from Notion web page.
-* **Workflow Automation:** Orchestrating a multi-step process with GitHub Actions for reliable scheduling.
-* **Cross-Platform Notification:** Sending personalized messages via Email (SMTP) and Telegram Bot API.
-* **Data Parsing & Manipulation:** Extracting and structuring text data from raw scraped content.
-* **Secure Credential Management:** Utilizing GitHub Secrets for sensitive API keys and login details.
-* **Version Control & Documentation:** Maintaining a clear and reproducible project setup.
+The pipeline processes two independent streams:
+1. **Deen Stream**: Religious/spiritual content
+2. **Dunya Stream**: Worldly/general content
 
----
+Each stream:
+- Scrapes a dedicated Notion page
+- Processes and filters the content
+- Sends curated snippets to a specific Discord channel
+- Maintains its own history to avoid recent repeats
 
-## How It Works
+## 🛠️ Technical Components
 
-1.  **Notion Scraping (`scrape_notion.js`):** A Node.js script uses Playwright to launch a headless browser, navigate to a specified Notion page, and scrape its raw text content. It then cleans up the content by removing extraneous Notion UI elements and standardizing snippet separators. The cleaned content is saved to `notion.txt`.
-2.  **Snippet Parsing & Selection (`send_email.py` - Integrated Logic):** A Python script reads `notion.txt`, identifies individual "snippets" based on a defined separator (`..`), and randomly selects a configurable number of them.
-3.  **Multi-platform Notification (`send_email.py`):** The selected snippets are then formatted and sent as:
-    * **Email:** Sent via SMTP using `smtplib`.
-    * **Telegram Message:** Sent via the Telegram Bot API using the `requests` library.
-4.  **Scheduled Automation (GitHub Actions):** A GitHub Actions workflow (`.github/workflows/scrape.yml`) orchestrates these steps, running daily at a specified time (e.g., 6 AM UTC) to ensure consistent delivery of new reminders.
+### 1. Content Scraping (`scrape_notion.js`)
+- Uses Playwright for headless browser automation
+- Handles stream-specific Notion page URLs
+- Cleans and formats content into `notion_[STREAM].txt` files
+- Validates required environment variables
 
----
+### 2. Snippet Processing (`send_notification.py`)
+- Processes stream-specific content files
+- Implements smart snippet selection:
+  - Categories: "Allah says" and "Knowing Allah" snippets
+  - Maintains selection history
+  - Avoids recent repeats (7-day window)
+  - Alternates between categories
+- Handles message chunking for Discord's character limits
+- Tracks sent snippets in `sent_snippets_[STREAM].json`
 
-## Getting Started: Replicate This Project
+### 3. Workflow Automation (`scrape.yml`)
+- Runs daily via GitHub Actions
+- Sequential stream processing (Deen → Dunya)
+- Stream-specific environment variables and secrets
+- Automated history file management
 
-Want to set up your own daily reminders from a Notion page? Follow these steps!
+## 🔧 Configuration
 
-### Prerequisites
+### Required Secrets
+- `NOTION_PAGE_URL_DEEN`: URL for the Deen stream Notion page
+- `NOTION_PAGE_URL_DUNYA`: URL for the Dunya stream Notion page
+- `DISCORD_WEBHOOK_URL_DEEN`: Discord webhook for Deen content
+- `DISCORD_WEBHOOK_URL_DUNYA`: Discord webhook for Dunya content
 
-Before you begin, ensure you have:
+### Key Settings (`send_notification.py`)
+- `RECENCY_DAYS`: Days before snippets can repeat (default: 7)
+- `NUM_SNIPPETS`: Snippets to send per day (default: 10)
+- `DISCORD_CHAR_LIMIT`: Safe character limit for Discord messages
 
-* A **GitHub account** to host your repository and run GitHub Actions.
-* A **Notion page** with content you want to scrape. Ensure your content is structured with `..` on a new line to separate distinct snippets.
-    * *Example Notion Structure:*
-        ````markdown
-         # 🌙 Daily Islamic Reminder Automation
+## 📋 File Structure
+```
+.
+├── .github/workflows/
+│   └── scrape.yml          # GitHub Actions workflow
+├── scrape_notion.js        # Notion content scraper
+├── send_notification.py    # Snippet processor and sender
+├── notion_DEEN.txt        # Scraped Deen content
+├── notion_DUNYA.txt       # Scraped Dunya content
+├── sent_snippets_DEEN.json  # Deen stream history
+└── sent_snippets_DUNYA.json # Dunya stream history
+```
 
-        ## Project Overview
+## 🚀 Execution Flow
 
-        This project automates the process of delivering daily Islamic reminders from a Notion page directly to a Discord channel via webhook. Leveraging GitHub Actions for scheduled execution, Node.js with Playwright for web scraping, and Python for data parsing and Discord notifications, this solution ensures curated spiritual content is delivered consistently.
+1. **Deen Stream Processing**
+   - Scrapes Deen Notion page → `notion_DEEN.txt`
+   - Processes and sends Deen snippets
+   - Updates `sent_snippets_DEEN.json`
 
-        This project demonstrates practical skills in:
-        * **Web Scraping:** Using Playwright to extract dynamic content from Notion web page.
-        * **Workflow Automation:** Orchestrating a multi-step process with GitHub Actions for reliable scheduling.
-        * **Notification Delivery:** Sending messages to Discord via webhook.
-        * **Data Parsing & Manipulation:** Extracting and structuring text data from raw scraped content.
-        * **Secure Credential Management:** Utilizing GitHub Secrets for sensitive API keys and login details.
-        * **Version Control & Documentation:** Maintaining a clear and reproducible project setup.
+2. **Dunya Stream Processing**
+   - Scrapes Dunya Notion page → `notion_DUNYA.txt`
+   - Processes and sends Dunya snippets
+   - Updates `sent_snippets_DUNYA.json`
 
-        ---
+## 🔍 Debug Features
+- Content verification steps for Dunya stream
+- Detailed logging throughout the process
+- Force-add flags for history files in git
 
-        ## How It Works
+## 📝 Content Format
+Notion pages should use `..` on a new line to separate distinct snippets:
+```
+         First snippet content here
+Multiple lines are supported
+..
+Second snippet content here
+..
+And so on
+```
 
-        1.  **Notion Scraping (`scrape_notion.js`):** A Node.js script uses Playwright to launch a headless browser, navigate to a specified Notion page, and scrape its raw text content. It then cleans up the content by removing extraneous Notion UI elements and standardizing snippet separators. The cleaned content is saved to `notion.txt`.
-        2.  **Snippet Parsing & Selection (`send_notification.py` - Integrated Logic):** A Python script reads `notion.txt`, identifies individual "snippets" based on a defined separator (`..`), and randomly selects a configurable number of them.
-        3.  **Notification (`send_notification.py`):** The selected snippets are then formatted and sent to a Discord channel via webhook.
-        4.  **Scheduled Automation (GitHub Actions):** A GitHub Actions workflow (`.github/workflows/scrape.yml`) orchestrates these steps, running daily at a specified time (e.g., 6 AM UTC) to ensure consistent delivery of new reminders.
+## 🤝 Contributing
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-        ---
-
-        ## Getting Started: Replicate This Project
-
-        Want to set up your own daily reminders from a Notion page? Follow these steps!
-
-        ### Prerequisites
-
-        Before you begin, ensure you have:
-
-        * A **GitHub account** to host your repository and run GitHub Actions.
-        * A **Notion page** with content you want to scrape. Ensure your content is structured with `..` on a new line to separate distinct snippets.
-            * *Example Notion Structure:*
-                ```
-                Snippet 1 content here.
-                This can be multiple lines.
-                ..
-                Snippet 2 content here.
-                Could be a Hadith or a Dua.
-                ..
-                And so on.
-                ```
+## 📄 License
+MIT License - See LICENSE file for details
 
         ### Step 1: Create Your GitHub Repository and Add Files
 
